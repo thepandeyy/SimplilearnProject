@@ -1,11 +1,16 @@
 "use server";
 
 import { base } from "@/lib/airtable";
+import type { FieldSet } from "airtable";
+
+interface RSVPFields extends FieldSet {
+  Email: string;
+  SubmittedAt: string; // ✅ MUST be string, NOT Date
+}
 
 export async function submitRSVP(formData: FormData) {
   const email = formData.get("email");
 
-  // ✅ Strong validation
   if (typeof email !== "string" || !email.trim() || !email.includes("@")) {
     throw new Error("Invalid email address");
   }
@@ -16,11 +21,11 @@ export async function submitRSVP(formData: FormData) {
   }
 
   try {
-    await base(tableName).create([
+    await base<RSVPFields>(tableName).create([
       {
         fields: {
           Email: email,
-          SubmittedAt: new Date().toISOString(), // ✅ Airtable-compatible
+          SubmittedAt: new Date().toISOString(), // ✅ correct
         },
       },
     ]);
