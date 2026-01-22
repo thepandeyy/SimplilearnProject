@@ -3,20 +3,29 @@
 import { base } from "@/lib/airtable";
 
 export async function submitRSVP(formData: FormData) {
-  console.log("SERVER ACTION HIT");
+  const email = formData.get("email");
 
-  const email = formData.get("email") as string;
+  // ✅ Strong validation
+  if (typeof email !== "string" || !email.trim() || !email.includes("@")) {
+    throw new Error("Invalid email address");
+  }
 
-  console.log("EMAIL RECEIVED:", email);
+  const tableName = process.env.AIRTABLE_TABLE_NAME;
+  if (!tableName) {
+    throw new Error("AIRTABLE_TABLE_NAME is not set");
+  }
 
-  await base(process.env.AIRTABLE_TABLE_NAME!).create([
-    {
-      fields: {
-        Email: email,
-        SubmittedAt: new Date(),
+  try {
+    await base(tableName).create([
+      {
+        fields: {
+          Email: email,
+          SubmittedAt: new Date().toISOString(), // ✅ Airtable-compatible
+        },
       },
-    },
-  ]);
-
-  console.log("RECORD CREATED");
+    ]);
+  } catch (error) {
+    console.error("Airtable create failed:", error);
+    throw new Error("Failed to submit RSVP");
+  }
 }
